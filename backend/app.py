@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
 import json
-from db_control import crud, mymodels
+from db_control import crud, mymodels_MySQL as mymodels
 
 
 class Customer(BaseModel):
@@ -32,6 +32,13 @@ def index():
 
 @app.post("/customers")
 def create_customer(customer: Customer):
+    # 既存IDチェック
+    existing = crud.myselect(mymodels.Customers, customer.customer_id)
+    if existing:
+        existing_obj = json.loads(existing)
+        if existing_obj:  # リストが空でなければ重複
+            raise HTTPException(status_code=409, detail="同じIDが使われています。別のIDを入力してください。")
+    # 新規登録
     values = customer.dict()
     tmp = crud.myinsert(mymodels.Customers, values)
     result = crud.myselect(mymodels.Customers, values.get("customer_id"))

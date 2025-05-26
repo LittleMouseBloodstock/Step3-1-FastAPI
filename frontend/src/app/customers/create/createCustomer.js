@@ -1,11 +1,17 @@
 "use server";
 import { revalidatePath } from "next/cache";
 
-const createCustomer = async (formData) => {
-  const creating_customer_name = formData.get("customer_name");
-  const creating_customer_id = formData.get("customer_id");
-  const creating_age = formData.get("age");
-  const creating_gender = formData.get("gender");
+const createCustomer = async (body) => {
+  const res = await fetch(process.env.NEXT_PUBLIC_API_ENDPOINT + `/customers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error("Failed to create customer: " + errorText);
+  }
+};
 
   const body_msg = JSON.stringify({
     customer_name: creating_customer_name,
@@ -24,6 +30,6 @@ const createCustomer = async (formData) => {
   }
 
   revalidatePath(`/customers`);
-};
+
 
 export default createCustomer;

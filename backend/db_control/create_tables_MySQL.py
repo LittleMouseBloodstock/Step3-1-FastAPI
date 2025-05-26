@@ -6,6 +6,7 @@ from db_control.mymodels_MySQL import Base, Customers
 from db_control.connect_MySQL import engine
 
 
+
 def init_db():
     # インスペクターを作成
     inspector = inspect(engine)
@@ -35,6 +36,7 @@ def insert_sample_data():
     customers = [
         Customers(customer_id="C1111", customer_name="ああさん", age=6, gender="男"),
         Customers(customer_id="C110", customer_name="桃太郎さん", age=30, gender="女"),
+        Customers(customer_id="C1122", customer_name="上杉さん", age=75, gender="男"),
     ]
 
     try:
@@ -48,5 +50,6 @@ def insert_sample_data():
         session.close()
 
 if __name__ == "__main__":
+    check_connection()  # ← まず接続チェック
     init_db()
     insert_sample_data()  # ← ここで呼び出す！

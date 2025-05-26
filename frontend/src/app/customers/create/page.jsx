@@ -1,18 +1,60 @@
 "use client";
-import { useRef } from "react";
+import { useRef, useState} from "react";
 import { useRouter } from "next/navigation";
-
-import createCustomer from "./createCustomer";
 
 export default function CreatePage() {
   const formRef = useRef();
   const router = useRouter();
+  const [errorMessage, setErrorMessage] = useState("");
 
+  // 顧客を作成する関数
+  async function createCustomer(data) {
+  const res = await fetch("http://127.0.0.1:8000/customers", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    let errorMsg = "顧客作成に失敗しました";
+    try {
+      // サーバーからのエラーメッセージを取得
+      const errorJson = await res.json();
+      if (errorJson.detail) errorMsg = errorJson.detail;
+    } catch (e) {
+      // レスポンスがJSONでない場合はそのまま
+    }
+    throw new Error(errorMsg);
+  }
+}
+
+  // フォーム送信時の処理
   const handleSubmit = async (event) => {
-    event.preventDefault();
-    const formData = new FormData(formRef.current);
-    await createCustomer(formData);
-    router.push(`./create/confirm?customer_id=${formData.get("customer_id")}`);
+    event.preventDefault(); // ページのリロードを防ぐ
+    setErrorMessage(""); // エラーをリセット
+
+    // フォームから値を取り出す
+    const form = formRef.current;
+    const data = {
+      customer_id: form.customer_id.value,
+      customer_name: form.customer_name.value,
+      age: Number(form.age.value),
+      gender: form.gender.value,
+    };
+
+    // 入力チェック（IDや名前が空ならエラー）
+    if (!data.customer_id || !data.customer_name) {
+      setErrorMessage("IDと名前は必須です");
+      return;
+    }
+
+    try {
+      await createCustomer(data);
+      router.push(`/customers/create/confirm?customer_id=${data.customer_id}`);
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
   };
 
   return (
@@ -28,6 +70,7 @@ export default function CreatePage() {
                     name="customer_name"
                     placeholder="桃太郎"
                     className="input input-bordered"
+                    style={{ color: "#f8e58c" }}
                   />
                 </p>
               </h2>
@@ -38,6 +81,7 @@ export default function CreatePage() {
                   name="customer_id"
                   placeholder="C030"
                   className="input input-bordered"
+                  style={{ color: "#f8e58c" }}
                 />
               </p>
               <p>
@@ -47,6 +91,7 @@ export default function CreatePage() {
                   name="age"
                   placeholder="30"
                   className="input input-bordered"
+                  style={{ color: "#f8e58c" }}
                 />
               </p>
               <p>
@@ -56,6 +101,7 @@ export default function CreatePage() {
                   name="gender"
                   placeholder="女"
                   className="input input-bordered"
+                  style={{ color: "#f8e58c" }}
                 />
               </p>
             </div>
@@ -65,6 +111,12 @@ export default function CreatePage() {
               </button>
             </div>
           </form>
+          {/* ここにエラーメッセージを表示 */}
+          {errorMessage && (
+            <div style={{ color: "red", margin: "1rem", textAlign: "center" }}>
+              {errorMessage}
+            </div>
+          )}
         </div>
       </div>
     </>
